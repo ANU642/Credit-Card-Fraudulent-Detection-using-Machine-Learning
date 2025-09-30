@@ -15,6 +15,6 @@ It uses the [Kaggle Credit Card Fraud Detection Dataset](https://www.kaggle.com/
 Clone this repository and install the required libraries:
 
 ```bash
-git clone https://github.com/YOURUSERNAME/credit-card-fraud-detection.git
+git clone https://github.com/ANU642/credit-card-fraud-detection.git
 cd credit-card-fraud-detection
 pip install -r requirements.txt
