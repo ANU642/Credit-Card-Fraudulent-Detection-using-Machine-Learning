@@ -1,0 +1,73 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
+from sklearn.metrics import classification_report, accuracy_score
+
+print("[INFO] Loading dataset...")
+df = pd.read_csv("creditcard.csv")   # put your dataset in project root or data/
+
+print("Shape of dataset:", df.shape)
+print(df.head())
+
+df_sampled = df.sample(frac=0.1, random_state=1)
+print("Sampled dataset shape:", df_sampled.shape)
+
+
+X = df_sampled.drop("Class", axis=1)
+y = df_sampled["Class"]
+
+fraud_count = len(y[y == 1])
+valid_count = len(y[y == 0])
+outlier_fraction = fraud_count / float(valid_count)
+
+print("Fraudulent transactions:", fraud_count)
+print("Valid transactions:", valid_count)
+print("Outlier fraction:", outlier_fraction)
+plt.figure(figsize=(6, 4))
+sns.histplot(df_sampled["Amount"], bins=50, kde=True)
+plt.title("Transaction Amount Distribution")
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.countplot(x="Class", data=df_sampled)
+plt.title("Class Distribution (0=Valid, 1=Fraud)")
+plt.show()
+random_state = 42
+
+models = {
+    "IsolationForest": IsolationForest(
+        max_samples=len(X),
+        contamination=outlier_fraction,
+        random_state=random_state
+    ),
+    "LocalOutlierFactor": LocalOutlierFactor(
+        n_neighbors=20,
+        contamination=outlier_fraction
+    ),
+    "OneClassSVM": OneClassSVM(
+        kernel="rbf",
+        gamma=0.001,
+        nu=outlier_fraction
+    )
+}
+
+for name, model in models.items():
+    print("\n========== {} ==========".format(name))
+    
+    if name == "LocalOutlierFactor":
+   
+        y_pred = model.fit_predict(X)
+    else:
+        model.fit(X)
+        y_pred = model.predict(X)
+    y_pred = np.where(y_pred == 1, 0, 1)
+    n_errors = (y_pred != y).sum()
+    print("Number of misclassified transactions:", n_errors)
+    print("Accuracy Score:", accuracy_score(y, y_pred))
+    print("Classification Report:")
+    print(classification_report(y, y_pred))
